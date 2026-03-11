@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scanbot Expiry Scanner</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #f8f9fa; padding: 20px; }
+        #scanner-container { width: 100%; max-width: 600px; height: 400px; margin: 20px auto; border: 4px solid #007bff; border-radius: 12px; overflow: hidden; background: #000; }
+        .status-box { padding: 15px; background: #343a40; color: #fff; border-radius: 8px; display: inline-block; min-width: 300px; }
+    </style>
+    <script src="/js/ScanbotSDK.min.js"></script>
+</head>
+<body>
+
+    <h1>Expiry Date Scanner</h1>
+    <div id="scanner-container"></div>
+    <div class="status-box" id="status">Initializing Engine...</div>
+
+    <script>
+        // 1. Aapka provide kiya hua License Key variable
+        const MY_LICENSE_KEY = 
+            "OeiiykUi7XILdHfyvU5bnaGISUnnCq" +
+            "trbqUHlqSttQcyMhyrys8uU6TKGdxR" +
+            "LvKPinNsNghAcTPGxc87rh0dgaXG1G" +
+            "RLdc64VIGTot2+ZJyXBSRo3GR24Zi3" +
+            "7VvcP+nWrNMcpj9uFePEowViRl2vOR" +
+            "6V87vDCrbxM39JppCF4fMKnv9nJzDY" +
+            "Rdc1SgV3nLbVjgPn5nl2b1Onm6p7YF" +
+            "kgRtl4QHo+G1s6aY5G5aDjzwuUN2IE" +
+            "EYypBXuDsOyAanp/dgCMysi6HD5Bl6" +
+            "oiq6f4dMawi7ZaZ0xoBHemqPjOA2yX" +
+            "l3+TmbJGXTxReiCMemrYqcE8leczEo" +
+            "9M1WGb3qIuqg==\nU2NhbmJvdFNESw" +
+            "psb2NhbGhvc3R8YmtoYmgKMTc3MTEx" +
+            "MzU5OQo4Mzg4NjA3Cjg=\n";
+
+        async function startScanner() {
+            try {
+                // 2. SDK Initialization
+                const sdk = await ScanbotSDK.initialize({
+                    licenseKey: MY_LICENSE_KEY,
+                    enginePath: "/scanbot-assets/" // WASM files ka location
+                });
+
+                const config = {
+                    containerId: "scanner-container",
+                    // Expiry Date pattern (Keywords + Date format)
+                    pattern: "(?:EXP|EXPIRY|BB)[:.\\s]*([0-9]{2}[./-][0-9]{2}(?:[./-][0-9]{2,4})?)",
+                    onTextDetected: async (result) => {
+                        document.getElementById('status').innerText = "Detected: " + result.text;
+                        console.log(status.innerText)
+                        // Extract only the date part
+                        const match = result.text.match(/([0-9]{2}[./-][0-9]{2}(?:[./-][0-9]{2,4})?)/);
+                        console.log(match)
+                        if (match) {
+                            await saveToBackend(match[0]);
+                        }
+                    },
+                    viewFinder: {
+                        enabled: true,
+                        aspectRatio: { width: 4, height: 1.5 },
+                        style: { strokeColor: "#28a745", strokeWidth: 5 }
+                    }
+                };
+
+                await sdk.createTextPatternScanner(config);
+                document.getElementById('status').innerText = "Ready to Scan!";
+
+            } catch (e) {
+                console.error("Initialization Failed:", e);
+                document.getElementById('status').innerText = "WASM files not found or path error!";
+                document.getElementById('status').style.background = "#dc3545";
+            }
+        }
+
+        async function saveToBackend(expiryDate) {
+            await fetch('/api/save-expiry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ expiryDate })
+            });
+            alert("Success! Expiry Date " + expiryDate + " saved.");
+        }
+
+        window.onload = startScanner;
+    </script>
+</body>
+</html>

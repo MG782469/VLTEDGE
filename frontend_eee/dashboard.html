@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ExpiryReminder - Dashboard</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{ --sidebar-width:260px; }
+body{ font-family:'Plus Jakarta Sans',sans-serif; background:linear-gradient(135deg,#eef2ff,#f8fafc); }
+*{ transition:.2s ease; }
+
+/* SIDEBAR */
+.sidebar{ width:var(--sidebar-width); height:100vh; position:fixed; background:rgba(255,255,255,.75); backdrop-filter:blur(14px); padding:2rem 1rem; border-right:1px solid #e5e7eb; z-index: 1000; }
+.logo-box{ background:linear-gradient(135deg,#6366f1,#4f46e5); box-shadow:0 8px 20px rgba(99,102,241,.4); }
+.nav-link{ padding:.9rem 1rem; border-radius:14px; color:#64748b; display:flex; gap:12px; align-items:center; text-decoration: none; cursor: pointer; position: relative; }
+.nav-link:hover{ background:#eef2ff; transform:translateX(6px); }
+.nav-link.active{ background:linear-gradient(135deg,#6366f1,#818cf8); color:white; box-shadow:0 6px 18px rgba(99,102,241,.35); }
+
+/* WHATSAPP STYLE BADGE - UPDATED POSITIONING */
+.icon-wrapper {
+    position: relative;
+    display: inline-block;
+    line-height: 1;
+}
+
+#nav-badge {
+    position: absolute;
+    top: -5px;      
+    right: -8px;    
+    background: #25D366; 
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    min-width: 18px;
+    height: 18px;
+    display: flex; /* Humesha dikhane ke liye flex set kar diya */
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid white;
+    z-index: 10;
+}
+
+/* MAIN */
+.main-content{ margin-left:var(--sidebar-width); padding:2.5rem; }
+.stat-card{ background:rgba(255,255,255,.9); backdrop-filter:blur(10px); border-radius:22px; padding:1.6rem; box-shadow:0 10px 25px rgba(0,0,0,.06); }
+.product-card{ border-radius:22px; background:white; box-shadow:0 15px 35px rgba(0,0,0,.06); }
+.top-auth-bar { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px; }
+.btn-primary{ background:linear-gradient(135deg,#6366f1,#4f46e5); border:none; border-radius:12px; font-weight:600; }
+.scan-btn{ position:fixed; bottom:30px; right:30px; width:70px; height:70px; border-radius:50%; font-size:26px; z-index: 999; display: flex; align-items: center; justify-content: center; text-decoration: none; color: white; }
+
+@media(max-width:768px){ .sidebar{transform:translateX(-100%);} .main-content{margin-left:0;} }
+</style>
+</head>
+
+<body>
+
+<nav class="sidebar">
+    <div class="d-flex align-items-center mb-5 px-3">
+        <div class="logo-box text-white rounded-3 p-2 me-2"><i class="bi bi-calendar2-check-fill"></i></div>
+        <h5 class="fw-bold mb-0">ExpiryRemind</h5>
+    </div>
+
+    <div class="nav flex-column">
+        <a href="dashboard.html" class="nav-link active"><i class="bi bi-grid"></i>Dashboard</a>
+        <a href="my-products.html" class="nav-link"><i class="bi bi-box-seam"></i>My Products</a>
+        <a href="categories.html" class="nav-link"><i class="bi bi-tags"></i>Categories</a>
+        
+        <a href="reminders.html" class="nav-link">
+            <div class="icon-wrapper">
+                <i class="bi bi-bell fs-5"></i>
+                <span id="nav-badge">0</span>
+            </div>
+            <span>Reminders</span>
+        </a>
+        
+        <hr>
+        <a href="login.html" class="nav-link text-danger"><i class="bi bi-box-arrow-left"></i>Logout</a>
+    </div>
+</nav>
+
+<main class="main-content">
+    <div class="top-auth-bar">
+        <a href="login.html" class="btn btn-outline-primary rounded-pill px-4">Login</a>
+        <a href="signup.html" class="btn btn-primary rounded-pill px-4 text-white">Register</a>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold">👋 Welcome back!</h3>
+            <p class="text-muted">You have items expiring this week.</p>
+        </div>
+        <a href="newProduct.html" class="btn btn-primary px-4 py-2 text-white">
+            <i class="bi bi-plus-lg me-2"></i>Add Product
+        </a>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="stat-card d-flex justify-content-between align-items-center">
+                <div><small class="text-muted">Total Products</small><h2 class="fw-bold" id="totalCount">0</h2></div>
+                <i class="bi bi-box-seam fs-1 text-primary opacity-50"></i>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card d-flex justify-content-between align-items-center">
+                <div><small class="text-muted">Expiring Soon</small><h2 class="fw-bold text-warning" id="soonCount">0</h2></div>
+                <i class="bi bi-hourglass-split fs-1 text-warning opacity-50"></i>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card d-flex justify-content-between align-items-center">
+                <div><small class="text-muted">Expired</small><h2 class="fw-bold text-danger" id="expiredCount">0</h2></div>
+                <i class="bi bi-exclamation-circle fs-1 text-danger opacity-50"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="product-card">
+        <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0">Recent Products</h5>
+            <div class="search-box position-relative w-25">
+                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                <input class="form-control shadow-none" id="searchInput" style="padding-left:40px" placeholder="Search products...">
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="bg-light">
+                    <tr><th class="ps-4">Product</th><th>Purchase Date</th><th>Expiry</th><th class="text-end pe-4">Actions</th></tr>
+                </thead>
+                <tbody id="recentTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<a href="newProduct.html" class="btn btn-primary scan-btn shadow-lg">
+    <i class="bi bi-camera"></i>
+</a>
+
+<script>
+    async function loadDashboard() {
+        try {
+            const res = await fetch('http://localhost:8080/products'); 
+            const data = await res.json();
+            
+            const now = new Date();
+            const nextWeek = new Date();
+            nextWeek.setDate(now.getDate() + 7);
+
+            let expired = 0;
+            let soon = 0;
+
+            data.forEach(p => {
+                const exp = new Date(p.expiryDate);
+                if (exp < now) expired++;
+                else if (exp <= nextWeek) soon++;
+            });
+
+            document.getElementById('totalCount').innerText = data.length;
+            document.getElementById('expiredCount').innerText = expired;
+            document.getElementById('soonCount').innerText = soon;
+
+            // FIX: Badge update (Humesha dikhega, chahe 0 ho)
+            const totalAlerts = expired + soon;
+            document.getElementById('nav-badge').innerText = totalAlerts;
+            
+            let html = '';
+            data.slice(-5).reverse().forEach(p => {
+                html += `<tr>
+                    <td class="ps-4 fw-semibold">${p.name}</td>
+                    <td>${new Date(p.purchaseDate).toLocaleDateString()}</td>
+                    <td>${new Date(p.expiryDate).toLocaleDateString()}</td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-sm btn-light border"><i class="bi bi-pencil"></i></button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('recentTableBody').innerHTML = html;
+
+        } catch(e) { 
+            console.error("Server not connected");
+            // Server error hone pe bhi default 0 dikhaye
+            document.getElementById('nav-badge').innerText = "0";
+        }
+    }
+    loadDashboard();
+</script>
+</body>
+</html>

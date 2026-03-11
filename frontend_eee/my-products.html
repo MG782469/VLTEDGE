@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Products - ExpiryRemind</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --sidebar-width: 260px; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: linear-gradient(135deg, #eef2ff, #f8fafc); }
+        
+        /* SIDEBAR (Same as Dashboard) */
+        .sidebar { width: var(--sidebar-width); height: 100vh; position: fixed; background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(14px); padding: 2rem 1rem; border-right: 1px solid #e5e7eb; }
+        .logo-box { background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 8px 20px rgba(99,102,241,0.4); }
+        .nav-link { padding: .9rem 1rem; border-radius: 14px; color: #64748b; display: flex; gap: 12px; align-items: center; text-decoration: none; }
+        .nav-link.active { background: linear-gradient(135deg, #6366f1, #818cf8); color: white; }
+
+        .main-content { margin-left: var(--sidebar-width); padding: 2.5rem; }
+
+        /* PRODUCT LIST STYLES */
+        .product-card-item {
+            background: white; border-radius: 20px; padding: 1.2rem;
+            margin-bottom: 1rem; border: 1px solid rgba(0,0,0,0.05);
+            transition: 0.3s ease; display: flex; align-items: center;
+        }
+        .product-card-item:hover { transform: scale(1.01); box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        
+        .cat-badge { font-size: 0.75rem; padding: 5px 12px; border-radius: 10px; font-weight: 600; }
+        .status-expired { color: #ef4444; background: #fee2e2; }
+        .status-safe { color: #10b981; background: #d1fae5; }
+        
+        .action-btn { width: 35px; height: 35px; border-radius: 10px; border: none; background: #f1f5f9; color: #64748b; }
+        .action-btn:hover { background: #e2e8f0; color: #1e293b; }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="d-flex align-items-center mb-5 px-3">
+        <div class="logo-box text-white rounded-3 p-2 me-2"><i class="bi bi-calendar2-check-fill"></i></div>
+        <h5 class="fw-bold mb-0">ExpiryRemind</h5>
+    </div>
+    <div class="nav flex-column">
+        <a href="dashboard.html" class="nav-link"><i class="bi bi-grid"></i>Dashboard</a>
+        <a href="my-products.html" class="nav-link active"><i class="bi bi-box-seam"></i>My Products</a>
+        <a href="categories.html" class="nav-link"><i class="bi bi-tags"></i>Categories</a>
+        <hr>
+        <a href="login.html" class="nav-link text-danger"><i class="bi bi-box-arrow-left"></i>Logout</a>
+    </div>
+</nav>
+
+<main class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">My Inventory</h2>
+            <p class="text-muted" id="itemCountDisplay">Loading your products...</p>
+        </div>
+        <div class="d-flex gap-2">
+            <select class="form-select border-0 shadow-sm rounded-3" id="filterCategory" onchange="fetchAndRender()">
+                <option value="All">All Categories</option>
+                <option value="Dairy">Dairy</option>
+                <option value="Grocery">Grocery</option>
+                <option value="Medicine">Medicine</option>
+            </select>
+            <a href="newProduct.html" class="btn btn-primary px-4 py-2 text-white">
+                <i class="bi bi-plus-lg me-2"></i>Add
+            </a>
+        </div>
+    </div>
+
+    <div id="productList">
+        </div>
+</main>
+
+<script>
+    async function fetchAndRender() {
+        const productList = document.getElementById('productList');
+        const countDisplay = document.getElementById('itemCountDisplay');
+        const filter = document.getElementById('filterCategory').value;
+
+        try {
+            const res = await fetch('http://localhost:8080/products');
+            let data = await res.json();
+
+            // Filter logic
+            if(filter !== "All") {
+                data = data.filter(p => p.category === filter);
+            }
+
+            countDisplay.innerText = `Total ${data.length} products found`;
+            productList.innerHTML = '';
+
+            data.reverse().forEach(p => {
+                const expiryDate = new Date(p.expiryDate);
+                const isExpired = expiryDate < new Date();
+                
+                productList.innerHTML += `
+                    <div class="product-card-item">
+                        <div class="flex-grow-1">
+                            <h6 class="fw-bold mb-1">${p.name}</h6>
+                            <span class="cat-badge bg-light text-muted">${p.category || 'General'}</span>
+                        </div>
+                        <div class="me-4 text-center">
+                            <small class="text-muted d-block">Expiry</small>
+                            <span class="fw-semibold ${isExpired ? 'text-danger' : ''}">${expiryDate.toLocaleDateString()}</span>
+                        </div>
+                        <div class="me-4">
+                            <span class="cat-badge ${isExpired ? 'status-expired' : 'status-safe'}">
+                                ${isExpired ? 'Expired' : 'Safe'}
+                            </span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="action-btn"><i class="bi bi-pencil"></i></button>
+                            <button class="action-btn text-danger" onclick="deleteProduct('${p._id}')"><i class="bi bi-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+        } catch(e) {
+            productList.innerHTML = '<p class="text-danger">Server error! Check if backend is running on 8080.</p>';
+        }
+    }
+
+    async function deleteProduct(id) {
+        if(confirm("Bhai, kya sach mein delete karna hai?")) {
+            await fetch(`http://localhost:8080/products/${id}`, { method: 'DELETE' });
+            fetchAndRender();
+        }
+    }
+
+    // Initial Load
+    fetchAndRender();
+</script>
+
+</body>
+</html>
